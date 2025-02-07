@@ -402,7 +402,8 @@ void update_config(void)
             (int)(the_lora_config->bw/1000), the_lora_config->sf);
     append_kv(tile_config_list, "LoRa BW,SF", buf);
 
-    sprintf(buf, "%d", theRepo->rplca_cnt);
+    sprintf(buf, "%d/%d (%d)", theGOset->goset_len,
+            theGOset->largest_claim_span, theRepo->rplca_cnt);
     append_kv(tile_config_list, "# feeds", buf);
     sprintf(buf, "%d", theRepo->entry_cnt);
     append_kv(tile_config_list, "# entries", buf);
