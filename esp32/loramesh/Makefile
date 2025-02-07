@@ -2,18 +2,27 @@
 
 # ** usage:
 
-# make [BOARD=..] [SERIAL=/dev/tty..] {firmware} {flush}
+# make BOARD=.. [SERIAL=/dev/tty..] {firmware} {flush|fullflush}
 
-#    known boards are: Heltec, T5gray, TBeam, TDeck, TWrist
-#    serial device: we have some heuristics for setting it automatically
+#    mandatory board, known values are: Heltec, Heltec3 (has more Flash),
+#                      T5gray, TBeam, TDeck, TWatch, TWrist, WLpaper
+#
+#    optional serial device: we have some heuristics for setting
+#                      it automatically, and loop through several
+#                      devices in onw go (convenient for flashing
+#                      multiple devices)
 
 
 # ** examples:
 
-# make BOARD=Heltec firmware     --> creates 'build/firmware-Heltec.bin'
-# make BOARD=Heltec flash
+# make BOARD=Heltec firmware     --> creates 'build/loramesh.ino.bin
+# make BOARD=Heltec flash        --> flashes this binary into the app
+#                                    partition, preserves the data
 
-#    these two phases can be combined:
+# make BOARD=Heltec fullflash    --> also rewrites the parition table
+#                                    and erases all data content
+
+# these two phases can be combined:
 
 # make BOARD=Heltec firmware flash
 
@@ -31,13 +40,11 @@ endif
 # ---------------------------------------------------------------------------
 # project-specific flags and values
 
-# default esp board version
-ESP32_CORE_VERSION=3.1.1
-# ESP32_CORE_VERSION=2.0.9
+ESP32_CORE_VERSION=3.1.1  # our default platform
 BAUD=921600
 BOOTLOADER_OFFS=0x1000
 
-ifeq ($(BOARD),Heltec)
+ifeq ($(BOARD),Heltec)       # "v2"
   CHIP=esp32
   FQBN=esp32:esp32:heltec_wifi_lora_32_V2
   PARTITIONS_CSV=partitions-heltec.csv
@@ -45,12 +52,12 @@ ifeq ($(BOARD),Heltec)
   FLASH_SIZE=4MB
   FLAGS_BOARD=-DTINYSSB_BOARD_HELTEC
 
-else ifeq ($(BOARD),Heltec3)
+else ifeq ($(BOARD),Heltec3) # "v3"
   CHIP=esp32s3
   FQBN=esp32:esp32:heltec_wifi_lora_32_V3
   PARTITIONS_CSV=partitions-heltec.csv
   MAX_UPLOAD=1572864 # 1.5MB
-  FLASH_SIZE=8MB
+  FLASH_SIZE=8MB     # !! more flash than Heltec2
   FLAGS_BOARD=-DTINYSSB_BOARD_HELTEC3
 
 else ifeq ($(BOARD),T5gray)
@@ -62,7 +69,7 @@ else ifeq ($(BOARD),T5gray)
   FLASH_SIZE=4MB
   FLAGS_BOARD=-DTINYSSB_BOARD_T5GRAY -DESP32 -DCORE_DEBUG_LEVEL=0 -DARDUINO_RUNNING_CORE=1 -DARDUINO_EVENT_RUNNING_CORE=1 -DARDUINO_USB_CDC_ON_BOOT=0
 
-else ifeq ($(BOARD),TBeam)
+else ifeq ($(BOARD),TBeam)  # old sx1276 as well as newer sx1262 LoRa chip
   BAUD=460800
   CHIP=esp32
   FQBN=esp32:esp32:t-beam
