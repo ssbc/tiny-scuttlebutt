@@ -12,7 +12,7 @@
 #                      devices in onw go (convenient for flashing
 #                      multiple devices)
 
-
+# list of devices:
 # ** examples:
 
 # make BOARD=Heltec firmware     --> creates 'build/loramesh.ino.bin
@@ -30,6 +30,20 @@
 # ** special flag for old TBeam:
 
 #   make BOARD=TBeam FLAG=TBEAM_07 firmware flash
+
+
+# ---------------------------------------------------------------------------
+# 
+# | Name    | Description                                 | Chip     | Size  |
+# | ------- | ------------------------------------------- | -------- | ----- |
+# | Heltec  | Heltec "WiFi LoRa 32(V2)"                   | esp32    | 4MB   |
+# | Heltec3 | Heltec "WiFi LoRa 32(V3)"                   | esp32s3  | 8MB   |
+# | TBeam   | Lilygo "T-Beam ESP32 LoRa Wireless Module"  | esp32    | 4MB   |
+# | TDeck   | Lilygo "T-Deck" (both versions)             | esp32s3  | 16MB  |
+# | TWatch  | Lilygo "T-Watch S3"                         | esp32s3  | 16MB  |
+# | TWrist  | Lilygo "T-Wrist"                            |          |       |
+# | T5gray  | Lilygo "T5 2.3.1in ?"                       |          |       |
+# | WLpaper | Heltec "Wireless Paper"                     | esp32s3  | 8MB   |
 
 
 ifndef BOARD
@@ -55,9 +69,9 @@ ifeq ($(BOARD),Heltec)       # "v2"
 else ifeq ($(BOARD),Heltec3) # "v3"
   CHIP=esp32s3
   FQBN=esp32:esp32:heltec_wifi_lora_32_V3
-  PARTITIONS_CSV=partitions-heltec.csv
+  PARTITIONS_CSV=partitions-heltec3.csv
   MAX_UPLOAD=1572864 # 1.5MB
-  FLASH_SIZE=8MB     # !! more flash than Heltec2
+  FLASH_SIZE=8MB     # double the flash than Heltec2
   FLAGS_BOARD=-DTINYSSB_BOARD_HELTEC3
 
 else ifeq ($(BOARD),T5gray)
@@ -149,7 +163,8 @@ BOOTAPP0PATH=$(shell find $(ARDUINO_ESP_DIR)/hardware -name "boot_app0.bin";)
 
 MAIN=$(shell ls *.ino)
 
-FLASH_BIN=firmware-$(BOARD).bin
+FLASH_BIN_FULL=firmware-$(BOARD)-full.bin
+FLASH_BIN_UPDATE=firmware-$(BOARD)-update.bin
 
 # FLAGS_BOARD ... see above
 
@@ -212,8 +227,19 @@ firmware:
 		--build-property build.partitions=assets/$(PARTITIONS_CSV) \
 		--build-property upload.maximum_size=$(MAX_UPLOAD) \
 		--libraries ./lib/$(BOARD) \
-		$(EXTRA_CPP_FLAGS) $(MAIN)
+		$(EXTRA_CPP_FLAGS) $(MAIN) \
+	&& \
+	cp build/$(MAIN).bin build/$(FLASH_BIN_UPDATE) \
+	&& \
+	$(ESPTOOL) \
+		--chip $(CHIP) merge_bin -o ./build/$(FLASH_BIN_FULL) \
+		--flash_mode dio --flash_freq 80m --flash_size $(FLASH_SIZE) \
+		--fill-flash-size $(FLASH_SIZE) \
+		$(BOOTLOADER_OFFS) ./build/$(MAIN).bootloader.bin \
+		0x8000 ./build/$(MAIN).partitions.bin \
+		0x10000 ./build/$(MAIN).bin
 
+# 		0xe000 $(BOOTAPP0PATH) \
 
 flash:
 	$(foreach var,$(SERIAL), \
@@ -223,19 +249,9 @@ flash:
 		--before default_reset --after hard_reset \
 		write_flash -z --flash_mode dio --flash_freq 80m \
 		--flash_size $(FLASH_SIZE) \
-		0x10000 ./build/$(MAIN).bin;)
+		0x10000 ./build/$(FLASH_BIN_UPDATE);)
 
-$(FLASH_BIN): build/$(MAIN).bin
-	$(ESPTOOL) \
-		--chip $(CHIP) merge_bin -o ./build/$(FLASH_BIN) \
-		--flash_mode dio --flash_freq 80m --flash_size $(FLASH_SIZE) \
-		--fill-flash-size $(FLASH_SIZE) \
-		$(BOOTLOADER_OFFS) ./build/$(MAIN).bootloader.bin \
-		0x8000 ./build/$(MAIN).partitions.bin \
-		0xe000 $(BOOTAPP0PATH) \
-		0x10000 ./build/$(MAIN).bin
-
-fullflash: $(FLASH_BIN)
+fullflash:
 	$(foreach var,$(SERIAL), \
 		$(ESPTOOL) \
 		--chip $(CHIP) \
@@ -243,7 +259,7 @@ fullflash: $(FLASH_BIN)
 		--before default_reset --after hard_reset \
 		write_flash -z --flash_mode dio --flash_freq 80m \
 		--flash_size $(FLASH_SIZE) \
-		0x0 ./build/$(FLASH_BIN);)
+		0x0 ./build/$(FLASH_BIN_FULL);)
 
 clean:
 	rm -f *~
