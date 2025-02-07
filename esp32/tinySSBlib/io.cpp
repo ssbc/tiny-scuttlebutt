@@ -146,7 +146,7 @@ class RXCallbacks: public BLECharacteristicCallbacks {
 
 void ble_init()
 {
-  Serial.println("BLE init");
+  Serial.println("# BLE init");
 
   // Create the BLE Device
   BLEDevice::init(ssid); // "tinySSB virtual LoRa pub");
@@ -255,30 +255,30 @@ void newLoraPacket_cb(void) // notification
 
 void lora_init()
 {
-  Serial.println("LoRa config");
+  Serial.println("# LoRa config");
 
 #ifdef USE_RADIO_LIB
   // int rc = radio.begin(the_lora_config->fr/1000000.0);
-  Serial.printf("setting LoRa to fr=%d/bw=%d/sf=%d\r\n", the_lora_config->fr,
+  Serial.printf("# setting LoRa to fr=%d/bw=%d/sf=%d\r\n", the_lora_config->fr,
                 the_lora_config->bw, the_lora_config->sf);
   int rc = radio.setFrequency(the_lora_config->fr/1000000.0); // float, in MHz
-  Serial.printf("lora setFr rc=%d\r\n", rc);
+  Serial.printf("#   setFr rc=%d\r\n", rc);
   rc = radio.setBandwidth(the_lora_config->bw/1000.0); // float, in kHz
-  Serial.printf("lora setBw rc=%d\r\n", rc);
+  // Serial.printf("#   setBw rc=%d\r\n", rc);
   rc = radio.setSpreadingFactor(the_lora_config->sf);
-  Serial.printf("lora setSf rc=%d\r\n", rc);
+  // Serial.printf("#   setSf rc=%d\r\n", rc);
   rc = radio.setCodingRate(the_lora_config->cr);
-  Serial.printf("lora setCr rc=%d\r\n", rc);
+  // Serial.printf("#   setCr rc=%d\r\n", rc);
   rc = radio.setSyncWord(the_lora_config->sw);
-  Serial.printf("lora setSw rc=%d\r\n", rc);
+  // Serial.printf("#   setSw rc=%d\r\n", rc);
   rc = radio.setOutputPower(the_lora_config->tx);
-  Serial.printf("lora setPr rc=%d\r\n", rc);
+  // Serial.printf("#   setPr rc=%d\r\n", rc);
   rc = radio.setCurrentLimit(140); // (accepted range is 45 - 140 mA), 0=disable
-  Serial.printf("lora setCR rc=%d\r\n", rc);
+  // Serial.printf("#   setCR rc=%d\r\n", rc);
   rc = radio.setPreambleLength(8); // (accepted range is 0 - 65535)
-  Serial.printf("lora setPL rc=%d\r\n", rc);
+  // Serial.printf("#   setPL rc=%d\r\n", rc);
   rc = radio.setCRC(false);
-  Serial.printf("lora setED rc=%d\r\n", rc); // CRC error detection
+  // Serial.printf("#   setED rc=%d\r\n", rc); // CRC error detection
   radio.setPacketReceivedAction(newLoraPacket_cb);
   rc = radio.startReceive();
   // Serial.printf("lora startReceive() rc=%d\r\n", rc);
@@ -293,7 +293,7 @@ void lora_init()
   LoRa.setPreambleLength(8);
   LoRa.setSyncWord(the_lora_config->sw);
   // LoRa.onReceive(newLoRaPkt);
-  Serial.printf("LoRa configured for fr=%d, bw=%d, sf=%d\r\n",
+  Serial.printf("# LoRa configured for fr=%d, bw=%d, sf=%d\r\n",
                 the_lora_config->fr, the_lora_config->bw, the_lora_config->sf);
   LoRa.receive();
 #endif

@@ -118,6 +118,9 @@ extern void hw_init();
 // ---------------------------------------------------------------------------
 #ifdef TINYSSB_BOARD_TDECK
 
+#include <SPI.h>
+#include <TFT_eSPI.h>
+
 /**
  * @file      utilities.h
  * @author    Lewis He (lewishe@outlook.com)
@@ -171,6 +174,8 @@ extern void hw_init();
 
 #define BOARD_BL_PIN        42
 
+#define BOARD_GPS_TX_PIN                 43 // T-Deck plus
+#define BOARD_GPS_RX_PIN                 44 // T-Deck plus
 
 #define TOUCH_MODULES_GT911
 #include "TouchLib.h"
@@ -178,8 +183,6 @@ extern void hw_init();
 
 #include <driver/i2s.h>
 
-#include <SPI.h>
-#include "TFT_eSPI.h"
 // #include "es7210.h"
 // #include <Audio.h>
 
@@ -187,6 +190,12 @@ extern void hw_init();
 
 // ---------------------------------------------------------------------------
 #ifdef TINYSSB_BOARD_TWATCH
+
+// T-Watch S3
+
+#if ESP_ARDUINO_VERSION != ESP_ARDUINO_VERSION_VAL(2, 0, 9)
+#  error "this T-Watch code MUST be compiled with ESP ARDUINO VERSION 2.0.9"
+#endif
 
 /**
  * @file      utilities.h
@@ -244,7 +253,14 @@ extern void hw_init();
 #define SHIELD_GPS_TX               (42)
 #define SHIELD_GPS_RX               (41)
 
-#endif
+
+// from LilyGoLib.h
+
+#define LEDC_BACKLIGHT_CHANNEL      3
+#define LEDC_BACKLIGHT_BIT_WIDTH    8
+#define LEDC_BACKLIGHT_FREQ         1000
+
+#endif // TINYSSB_BOARD_TWATCH
 
 // ---------------------------------------------------------------------------
 #ifdef TINYSSB_BOARD_TWRIST

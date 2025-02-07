@@ -133,6 +133,8 @@ public:
 #ifdef TINYSSB_BOARD_TWATCH
 // https://www.lilygo.cc/products/t-watch-s3
 
+#define USING_TWATCH_S3
+
 # define DEVICE_MAKE "Lilygo T-Watch S3"
 # define HAS_BLE
 # define HAS_LORA
@@ -191,6 +193,9 @@ public:
 // FS -----------------------------------------------------------------
 
 // #include <SD.h>
+// #include <LITTLEFS.h>
+// #define MyFS LITTLEFS
+
 #include <LittleFS.h>
 #define MyFS LittleFS
 

@@ -13,7 +13,8 @@ public:
   virtual void buzz() {};
   virtual void loop() {};    // for screen animations
   virtual void refresh() {}; // force refresh (of current screen)
-  virtual void show_boot_msg(char *msg) {};
+  virtual void show_boot_msg(char *msg) { Serial.printf("# %s\r\n", msg); };
+  virtual void boot_ended() {};
 
   // general:
   void show_node_name(char *s);

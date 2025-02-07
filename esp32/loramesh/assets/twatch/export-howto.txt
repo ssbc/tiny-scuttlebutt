@@ -1,0 +1,11 @@
+https://lvgl.io/tools/imageconverter
+
+tremola background:
+CF_INDEXED_4_BIT
+
+buttons:
+CF_ALPHA_2_BIT
+
+
+haze:
+CF_INDEXED_1_BIT

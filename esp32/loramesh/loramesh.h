@@ -141,7 +141,6 @@ void setup()
   char *msg;
 
   Serial.begin(115200);
-  delay(10);
 
   utc_compile_time = (char*) malloc(strlen(UTC_COMPILE_TIME) + 1);
   strcpy(utc_compile_time, UTC_COMPILE_TIME);
@@ -149,9 +148,12 @@ void setup()
     if (*cp == '_') *cp = ' ';
 
   Serial.println();
+  // Serial.printf("** ESP32 Arduino core version %d.%d.%d\r\n**\r\n",
+  //               ESP_ARDUINO_VERSION_MAJOR,
+  //               ESP_ARDUINO_VERSION_MINOR,
+  //               ESP_ARDUINO_VERSION_PATCH);
   Serial.println("** Welcome to the tinySSB virtual pub "
                  "running on a " DEVICE_MAKE);
-  // Serial.println("** compiled " __DATE__ ", " __TIME__ UTC_OFFSET);
   Serial.printf("** compiled %s\r\n", utc_compile_time);
 
   esp_efuse_mac_get_default(my_mac);
@@ -162,14 +164,14 @@ void setup()
   
   // #if defined(HAS_UDP) || defined(HAS_BT) || defined(HAS_BLE)
   sprintf(ssid, "%s-%s", tSSB_WIFI_SSID, to_hex(my_mac+4, 2));
-  Serial.printf("** this is node %s\r\n\r\n", ssid);
+  Serial.printf("** this is node %s\r\n", ssid);
+  Serial.println();
   // #endif
-  delay(1000);
 
+  Serial.println("# hw_init() start");
   hw_init();
-
-  Serial.println("after hw_init");
-  delay(3500);
+  Serial.println("# hw_init() ended");
+  delay(2000); // this increases the chance to be able to flash a new image
 
 #if defined(TINYSSB_BOARD_HELTEC) || defined(TINYSSB_BOARD_HELTEC3)
   theUI    = new UI_Heltec_Class();
@@ -186,38 +188,34 @@ void setup()
 #elif defined(TINYSSB_BOARD_WLPAPER)
   theUI    = new UI_WLpaper_Class();
 #endif
-  // theUI->show_node_name(ssid);
   // theUI->spinner(true);
-  // theUI->show_boot_msg("mounting file system");
-
-  delay(500);
+  // theUI->show_node_name(ssid); --> leads to crash on TWatch
+  theUI->show_boot_msg("mounting file system");
 
   // --- file system
 
-  if (!MyFS.begin(true))
-    msg = "could not mount file system, partition was reformatted";
-  else
-    msg = "file system was mounted";
-  theUI->show_boot_msg(msg);
-  Serial.println(msg);
-
-  // MyFS.format(); // uncomment and run once after a change in partition size
+  if (!MyFS.begin(false)) {
+    theUI->show_boot_msg("  failed, reformatting");
+    MyFS.format();
+    MyFS.begin(false);    
+    theUI->show_boot_msg("  done formatting");
+  } else
+    theUI->show_boot_msg("  done");
 
   MyFS.mkdir(FEED_DIR);
-  Serial.printf("file system: %d total bytes, %d used\r\n",
+  Serial.printf("# file system: %d total bytes, %d used\r\n",
                 MyFS.totalBytes(), MyFS.usedBytes());
 
   // --- tinySSB config
 
-  theUI->show_boot_msg("load config");
+  theUI->show_boot_msg("loading config");
   the_config = config_load();
 
   // FIXME: we should not print the mgmt signing key to the console ?
-  Serial.printf("tinySSB config is %s\r\n",
+  Serial.printf("# tinySSB config is %s\r\n",
                 bipf2String(the_config, "\r\n", 1).c_str());
-  Serial.println();
 
-  theUI->show_boot_msg("setup log files");
+  theUI->show_boot_msg("setting up log files");
   msg = "** starting";
   lora_log = MyFS.open(LORA_LOG_FILENAME, FILE_APPEND);
   lora_log_wr(msg);
@@ -229,10 +227,10 @@ void setup()
 #ifdef USE_RADIO_LIB
   int state = radio.begin();
   if (state == RADIOLIB_ERR_NONE) {
-    Serial.println("RadioLib begin() success!");
+    theUI->show_boot_msg("RadioLib begin() success!");
   } else {
-    Serial.print(F("RadioLib begin() failed, code "));
-    Serial.println(state);
+    theUI->show_boot_msg("RadioLib begin() failed");
+    // Serial.println(state);
   }
 #endif
 
@@ -272,7 +270,7 @@ void setup()
 
   theUI->show_boot_msg("load feed data ...");
   theRepo->load();
-  Serial.printf("\r\n   Repo: %d feeds, %d entries, %d chunks\r\n",
+  Serial.printf("\r\n# Repo: %d feeds, %d entries, %d chunks\r\n",
                 theRepo->rplca_cnt, theRepo->entry_cnt, theRepo->chunk_cnt);
   // theUI->show_repo_stats(theRepo->rplca_cnt,
   //                      theRepo->entry_cnt, theRepo->chunk_cnt, 1);
@@ -282,16 +280,14 @@ void setup()
   // the_TVA_app = new App_TVA_Class(posts);
   // the_TVA_app->restream();
 
-
   theUI->spinner(false);
   theUI->buzz();
 
-  msg = "end of setup\n";
-  theUI->show_boot_msg(msg);
-  Serial.println(msg);
-  delay(1000);
-
+  theUI->show_boot_msg("end of setup");
+  theUI->boot_ended();
   theUI->refresh();
+
+  Serial.println();
 }
 
 
